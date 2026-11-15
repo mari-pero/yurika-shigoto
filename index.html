@@ -1,0 +1,1311 @@
+<title>お客様メモ帳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<style>
+:root {
+  --rose: #895269;
+  --rose-light: #f5d9e3;
+  --blush: #faedf2;
+  --blush-mid: #eadde7;
+  --gold: #80639c;
+  --cream: #faf7f4;
+  --text: #332a34;
+  --text-soft: #635566;
+  --text-muted: #6e6172;
+  --white: #fffdfd;
+  --shadow: rgba(73,49,71,0.07);
+  --shadow-deep: rgba(73,49,71,0.13);
+  --radius: 20px;
+  --radius-sm: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cream: #221a23;
+    --blush: #2e2030;
+    --blush-mid: #3a2a3c;
+    --white: #2a1f2b;
+    --text: #f0e6f2;
+    --text-soft: #c9aed0;
+    --text-muted: #9a7fa0;
+    --shadow: rgba(0,0,0,0.3);
+    --shadow-deep: rgba(0,0,0,0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --cream: #221a23;
+  --blush: #2e2030;
+  --blush-mid: #3a2a3c;
+  --white: #2a1f2b;
+  --text: #f0e6f2;
+  --text-soft: #c9aed0;
+  --text-muted: #9a7fa0;
+  --shadow: rgba(0,0,0,0.3);
+  --shadow-deep: rgba(0,0,0,0.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans CJK JP", Meiryo, sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100%;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  line-height: 1.55;
+}
+button, input, textarea, select { font-family: inherit !important; }
+
+/* ── Header ── */
+.app-header {
+  background: radial-gradient(ellipse at 75% 15%, #eee4fc, transparent 62%), linear-gradient(125deg, #fff5f6, #faf1ee);
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+  padding-bottom: 21px;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  text-align: center;
+  border-bottom: 1px solid #f4e7ee;
+}
+.app-header h1 {
+  font-size: 25px;
+  font-weight: 750;
+  color: var(--text);
+  letter-spacing: 0.035em;
+}
+.app-header p {
+  font-size: 10px;
+  color: #746079;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  margin-top: 5px;
+  font-weight: 700;
+}
+.memo-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 4px;
+}
+.notebook-art { width: 72px; height: 68px; flex: none; display: block; }
+.memo-lettering { display: block; width: clamp(155px, 56vw, 222px); height: auto; }
+.memo-title-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.crown { display: none; }
+
+/* ── Nav tabs ── */
+.nav-tabs {
+  display: flex;
+  gap: 5px;
+  background: rgba(255,253,252,0.96);
+  border-bottom: 1px solid var(--blush-mid);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 7px max(12px, env(safe-area-inset-right, 0px)) 7px max(12px, env(safe-area-inset-left, 0px));
+  justify-content: center;
+}
+.nav-tab {
+  flex: 1;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-soft);
+  cursor: pointer;
+  border-radius: 13px;
+  padding: 7px 4px;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-tab.active {
+  background: #f7e5ee;
+  color: #75405b;
+}
+.nav-tab.active::after { display: none; }
+.line-icon { width: 20px; height: 20px; flex: none; vertical-align: middle; }
+
+/* ── Main content ── */
+.main { padding: 20px 0; max-width: 680px; margin-inline: auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 3px 16px var(--shadow);
+  border: 1px solid var(--blush-mid);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  background: #895269;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 13px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+.btn-ghost {
+  background: none;
+  border: 1.5px solid var(--rose-light);
+  color: var(--rose);
+  border-radius: 50px;
+  padding: 8px 18px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-ghost:hover { background: var(--blush); }
+
+.btn-sm {
+  background: var(--blush);
+  color: var(--text-soft);
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.75em;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.btn-sm.danger { background: #fde8e8; color: #c0392b; }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 0.75em;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--blush-mid);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.88em;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--rose);
+}
+.form-textarea { min-height: 80px; resize: vertical; }
+
+.gender-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gender-btn {
+  flex: 1; min-width: 70px;
+  padding: 9px 10px;
+  border: 1.5px solid var(--blush-mid);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--text-soft);
+  font-size: 0.8em;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.gender-btn.selected {
+  border-color: var(--rose);
+  background: var(--blush);
+  color: var(--rose);
+  font-weight: 500;
+}
+
+/* ── Customer list ── */
+.search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+.search-box input {
+  width: 100%;
+  padding: 11px 14px 11px 38px;
+  border: 1.5px solid var(--blush-mid);
+  border-radius: 50px;
+  background: var(--white);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.88em;
+  outline: none;
+}
+.search-box input:focus { border-color: var(--rose); }
+.search-icon {
+  position: absolute;
+  left: 13px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1em;
+  pointer-events: none;
+}
+
+.customer-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px var(--shadow);
+  border: 1px solid var(--blush-mid);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.customer-card:active { transform: scale(0.98); }
+.customer-avatar {
+  display: none;
+}
+.customer-info { flex: 1; min-width: 0; }
+.customer-name {
+  font-weight: 750;
+  font-size: 17px;
+  margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.customer-meta {
+  font-size: 13px;
+  color: var(--text-soft);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 50px;
+  font-size: 0.72em;
+  font-weight: 500;
+}
+.badge-rose { background: var(--blush); color: var(--rose); }
+.badge-gold { background: #fdf3e3; color: var(--gold); }
+.badge-birthday { background: #fff0f5; color: #d4607a; }
+
+/* ── Detail view ── */
+.detail-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px;
+}
+.detail-avatar {
+  display: none;
+}
+.detail-name {
+  font-size: 1.5em; font-weight: 750;
+  line-height: 1.2;
+}
+.detail-sub { font-size: 0.75em; color: var(--text-muted); margin-top: 2px; }
+
+.section-title {
+  font-size: 0.72em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rose);
+  font-weight: 750;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 1px;
+  background: var(--rose-light);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.info-item { }
+.info-label { font-size: 0.7em; color: var(--text-muted); margin-bottom: 2px; }
+.info-value { font-size: 0.88em; font-weight: 500; }
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  background: var(--blush);
+  color: var(--rose);
+  border-radius: 50px;
+  padding: 4px 11px;
+  font-size: 0.75em;
+}
+
+/* ── Visit log ── */
+.visit-item {
+  border-left: 2px solid var(--rose-light);
+  padding-left: 14px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.visit-item::before {
+  content: '';
+  position: absolute;
+  left: -5px; top: 6px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--rose);
+}
+.visit-date { font-size: 0.75em; color: var(--text-muted); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+.visit-count { font-size: 0.72em; color: var(--rose); margin-bottom: 5px; }
+.visit-note { font-size: 0.84em; line-height: 1.6; }
+
+/* ── Calendar ── */
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3em; font-weight: 600;
+}
+.cal-nav {
+  background: none; border: none; font-size: 1.2em;
+  cursor: pointer; color: var(--rose); padding: 4px 10px;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px; text-align: center;
+}
+.cal-day-name {
+  font-size: 0.65em; color: var(--text-muted);
+  padding: 4px 0; letter-spacing: 0.05em;
+}
+.cal-cell {
+  min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding-top: 6px;
+  font-size: 0.82em;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+  font-variant-numeric: tabular-nums;
+}
+.cal-cell:hover { background: var(--blush); }
+.cal-cell.today { background: var(--blush-mid); font-weight: 700; color: var(--rose); }
+.cal-cell.has-event::after {
+  content: '';
+  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--rose);
+}
+.cal-cell.other-month { color: var(--text-muted); opacity: 0.4; }
+
+.event-list { margin-top: 16px; }
+.event-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--blush);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  font-size: 0.84em;
+}
+.event-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--rose); flex-shrink: 0;
+}
+
+.sort-btn {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--blush-mid);
+  background: var(--white);
+  color: var(--text-soft);
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sort-btn.active {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── Stats ── */
+.stat-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 14px;
+}
+.stat-box {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 10px var(--shadow);
+  border: 1px solid var(--blush-mid);
+}
+.stat-num {
+  font-size: 29px; font-weight: 750; color: #75405b;
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.stat-label { font-size: 13px; color: var(--text-soft); margin-top: 4px; letter-spacing: 0.05em; }
+.stat-box:nth-child(even) { background: #f8f3fe; }
+
+.birthday-alert {
+  background: linear-gradient(135deg, #fff0f5, #fde8ef);
+  border: 1px solid #f4bace;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.birthday-alert-title { font-size: 0.8em; font-weight: 500; color: #d4607a; margin-bottom: 8px; }
+.birthday-person {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.84em; padding: 4px 0;
+}
+
+/* ── Utility ── */
+.flex-row { display: flex; gap: 10px; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.text-center { text-align: center; }
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-muted); font-size: 0.88em;
+}
+.empty-state .icon { font-size: 2.5em; margin-bottom: 10px; }
+
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.82em; color: var(--rose);
+  background: none; border: none; cursor: pointer;
+  padding: 0; margin-bottom: 16px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(53,44,65,0.36);
+  z-index: 100;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.modal-overlay[hidden] { display: none !important; }
+.modal {
+  background: var(--cream);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 24px max(20px, env(safe-area-inset-left, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3em; font-weight: 600;
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-actions {
+  display: flex; gap: 10px; margin-top: 20px;
+}
+.modal-actions .btn-primary { flex: 1; }
+</style>
+
+<!-- ═══ APP ═══ -->
+
+<div class="app-header">
+  <div class="memo-heading">
+    <svg class="notebook-art" viewBox="0 0 84 78" aria-hidden="true" focusable="false">
+      <path fill="#eadcf5" d="M8 42C6 27 22 13 42 12c20-1 35 11 34 30S60 69 40 71C23 73 11 60 8 42Z"/>
+      <ellipse cx="43" cy="66" rx="24" ry="4" fill="#bd9aba" opacity=".2"/>
+      <g transform="rotate(-10 42 38)" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 18h34a6 6 0 0 1 6 6v34a6 6 0 0 1-6 6H23a7 7 0 0 1-7-7V25a7 7 0 0 1 7-7Z" fill="#fff9f0" stroke="#ae7795" stroke-width="1.5"/>
+        <path d="M47 58v11l5-3 5 3V58" fill="#b6a0d7" stroke="#9377b8" stroke-width="1.2"/>
+        <rect x="16" y="14" width="47" height="44" rx="7" fill="#f2b4cb" stroke="#ae7795" stroke-width="1.5"/>
+        <path d="M25 15v42M19 59h42" stroke="#ae7795" opacity=".52"/>
+        <path d="M14 23h8m-8 11h8m-8 11h8" stroke="#fff9f0" stroke-width="2.6"/>
+        <rect x="32" y="24" width="24" height="22" rx="7" fill="#fff8ef"/>
+        <path d="M44 40c-1.2-1-5.2-3.9-5.2-6.2 0-2.6 3.1-3.6 5.2-1 2.1-2.6 5.2-1.6 5.2 1 0 2.3-4 5.2-5.2 6.2Z" fill="#d87b9f"/>
+      </g>
+      <path d="M69 9q0 6 6 6-6 0-6 6 0-6-6-6 6 0 6-6Z" fill="#b89ad9"/>
+      <path d="M8 13q0 5 5 5-5 0-5 5 0-5-5-5 5 0 5-5Z" fill="#e5a3bc"/>
+      <circle cx="74" cy="49" r="2.3" fill="#d899b8"/>
+    </svg>
+    <h1>
+      <span class="memo-title-label">お客様メモ帳</span>
+      <svg class="memo-lettering" viewBox="0 0 183 34" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path transform="translate(2 4) rotate(-5 14 16)" d="M5 11q6 0 12-2M11 4q0 9-.5 19c-.3 6-10 1-6-3 3-4 16-8 18-2 2 5-3 8-7 7M20 8q3 1 5 4"/><path transform="translate(32 1) rotate(2 14 16)" d="M14 3l1 3M5 11l1-4 19-1-1 4M13 10q-2 4-6 6M12 12l9-.4Q17 19 4 21M11 14q5 5 15 7M9 22l.5 7M10 23l11-.2-.7 5.6-10.7.6"/><path transform="translate(63 1) rotate(-2 14 16)" d="M2 11l10-.6M7 4l-.4 24M7 11q-2 7-6 11M8 14l4 4M16 4l2 3M24 3l-2 4M13 8l13-.5M15 12l10-.3M13 16l14-.3M20 8v18q0 3-4 1M14 19l3 2M12 26l6-4M25 18l-3 3M21 21q2 4 7 6"/><path transform="translate(95 3) rotate(5 14 16)" d="M21 5Q17 20 5 26M8 12q7 3 14 9"/><path transform="translate(122 3) rotate(-4 14 16)" d="M7 8l15-1M5 16l20-1M13 8v13q0 5 10 3"/><path transform="translate(152 1) rotate(2 14 16)" d="M2 10l9-.5-.3 12-2 .2M2 10v13M6 5v23M15 16V5l11-.5M15 9l10-.3M15 12.5l10-.5M12 17l16-.5M16 17v11l5-2M22 18q0 6 6 10M27 19l-4 4"/></g></svg>
+    </h1>
+  </div>
+  <p>Customer's Note</p>
+</div>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" id="tab-list" onclick="showView('list')">
+    <svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg> お客様
+  </button>
+  <button class="nav-tab" id="tab-cal" onclick="showView('cal')">
+    <svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M8 4v4m8-4v4M4 11h16m-11 4h2m2 0h2"/></svg> カレンダー
+  </button>
+  <button class="nav-tab" id="tab-stats" onclick="showView('stats')">
+    <svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4v15h15M9 15v-4m4 4V8m4 7V5"/></svg> 成果
+  </button>
+</nav>
+
+<div class="main">
+
+  <!-- ── LIST VIEW ── -->
+  <div class="view active" id="view-list">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="お客様を検索..." oninput="renderList()" autocomplete="off">
+    </div>
+    <div class="flex-between mb-16">
+      <div id="listCount" style="font-size:0.78em;color:var(--text-muted)"></div>
+      <button class="btn-primary" onclick="openAddModal()">＋ 新規登録</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="sort-btn active" id="sortKana" onclick="setSortMode('kana')">あいうえお順</button>
+      <button class="sort-btn" id="sortVisits" onclick="setSortMode('visits')">来店回数順</button>
+    </div>
+    <div id="customerList"></div>
+  </div>
+
+  <!-- ── DETAIL VIEW ── -->
+  <div class="view" id="view-detail">
+    <button class="back-btn" onclick="showView('list')">← 一覧に戻る</button>
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- ── CONFIRM DIALOG ── -->
+  <div class="modal-overlay" id="confirmDialog" hidden style="z-index:200">
+    <div class="modal" style="max-width:320px;text-align:center">
+      <div style="font-size:1.5em;margin-bottom:10px">🗑️</div>
+      <div style="font-weight:600;margin-bottom:8px" id="confirmMsg">削除しますか？</div>
+      <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:20px">この操作は元に戻せません</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn-ghost" onclick="closeConfirm()">キャンセル</button>
+        <button class="btn-sm danger" style="padding:10px 20px" id="confirmOkBtn">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CALENDAR VIEW ── -->
+  <div class="view" id="view-cal">
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()">‹</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button class="cal-nav" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="event-list" id="eventList"></div>
+
+  </div>
+
+  <!-- ── STATS VIEW ── -->
+  <div class="view" id="view-stats">
+    <div id="birthdayAlerts"></div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">今月の来店人数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statVisits">0</div>
+        <div class="stat-label">今月の指名数</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-num" id="statRepeat">0%</div>
+        <div class="stat-label">リピート率</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="statShimei">0%</div>
+        <div class="stat-label">今月の指名率</div>
+      </div>
+    </div>
+    <div class="stat-row" style="grid-template-columns:1fr">
+      <div class="stat-box">
+        <div class="stat-num" id="statSalary">¥0</div>
+        <div class="stat-label">今月の給料合計</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">💰 給料を入力</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:4px">
+        <div style="flex:1">
+          <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">日付</label>
+          <input type="date" class="form-input" id="salaryDate" style="font-size:0.9em;padding:9px 12px">
+        </div>
+        <div style="flex:1">
+          <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">金額（円）</label>
+          <input type="number" class="form-input" id="salaryAmount" placeholder="例：12000" style="font-size:0.9em;padding:9px 12px" inputmode="numeric">
+        </div>
+        <button class="btn-primary" style="font-size:0.82em;padding:9px 14px;white-space:nowrap" onclick="addSalary()">追加</button>
+      </div>
+      <div id="salaryList" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">今月の来店</div>
+      <div id="monthlyList"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ ADD CUSTOMER MODAL ══ -->
+<div class="modal-overlay" id="addModal" hidden>
+  <div class="modal">
+    <div class="modal-title">🌸 お客様を登録</div>
+    <div class="form-group">
+      <label class="form-label">お名前 *</label>
+      <input type="text" class="form-input" id="newName" placeholder="例：田中様、Aさん">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">メモ（特徴・趣味・話したこと・NGなど自由に）</label>
+      <textarea class="form-textarea" id="newMemo" placeholder="例：30代、スーツ、眼鏡。ゴルフ好き、仕事の話が多い。神社大好き。まじめそうに見えてM系w" style="min-height:120px"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">誕生日（わかれば）</label>
+      <input type="date" class="form-input" id="newBirthday">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeAddModal()">キャンセル</button>
+      <button class="btn-primary" id="addModalSaveBtn" onclick="saveCustomer()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD/EDIT VISIT MODAL ══ -->
+<div class="modal-overlay" id="visitModal" hidden>
+  <div class="modal">
+    <div class="modal-title" id="visitModalTitle">📝 来店記録を追加</div>
+    <div class="form-group">
+      <label class="form-label">来店日 *</label>
+      <input type="date" class="form-input" id="visitDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">来店種別</label>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="gender-btn" id="typeNew" onclick="selectVisitKind('新規')">新規</button>
+        <button class="gender-btn" id="typeRepeat" onclick="selectVisitKind('リピ')">リピ</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">指名</label>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="gender-btn" id="typeFree" onclick="selectVisitType('フリー')">フリー</button>
+        <button class="gender-btn" id="typeShimei" onclick="selectVisitType('指名')">指名</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">コース時間</label>
+      <input type="text" class="form-input" id="visitCourse" placeholder="例：60分、90分、120分">
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ（衣装・したこと・反応・話した内容など自由に）</label>
+      <textarea class="form-textarea" id="visitMemo" placeholder="例：黒ドレス。タントラ120H 18,000円。娘さんがYouTubeやってて超かわいい。神社好き。めっちゃ喜んでくれた。次回またタントラ希望。" style="min-height:160px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeVisitModal()">キャンセル</button>
+      <button class="btn-primary" id="visitSaveBtn" onclick="saveVisit()">記録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+let data = { customers: [], shifts: [], salary: [] };
+let currentCustomerId = null;
+let selectedType = '';
+let calYear, calMonth;
+
+function load() {
+  try {
+    const saved = localStorage.getItem('customerMemoData_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      data.customers = parsed.customers || [];
+      data.shifts = parsed.shifts || [];
+      data.salary = parsed.salary || [];
+    }
+  } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem('customerMemoData_v2', JSON.stringify(data)); } catch(e) {}
+}
+
+// ── Init ──
+load();
+const now = new Date();
+calYear = now.getFullYear();
+calMonth = now.getMonth();
+renderList();
+renderCalendar();
+renderStats();
+
+// ── Views ──
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const tabMap = { list: 'tab-list', cal: 'tab-cal', stats: 'tab-stats' }; // tabs
+  if (tabMap[v]) document.getElementById(tabMap[v]).classList.add('active');
+  if (v === 'stats') renderStats();
+  if (v === 'cal') renderCalendar();
+}
+
+// ── Sort ──
+let sortMode = 'kana';
+function setSortMode(mode) {
+  sortMode = mode;
+  document.getElementById('sortKana').classList.toggle('active', mode === 'kana');
+  document.getElementById('sortVisits').classList.toggle('active', mode === 'visits');
+  renderList();
+}
+
+// ── Customer List ──
+function renderList() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  let list = data.customers.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (c.feature||'').toLowerCase().includes(q) ||
+    (c.hobbies||'').toLowerCase().includes(q)
+  );
+  if (sortMode === 'kana') {
+    list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  } else {
+    list = [...list].sort((a, b) => (b.visits||[]).length - (a.visits||[]).length);
+  }
+  const el = document.getElementById('customerList');
+  document.getElementById('listCount').textContent = `${list.length}名`;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🌸</div>まだ登録がありません</div>';
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const visits = c.visits || [];
+    const last = visits.length ? visits[visits.length-1].date : null;
+    const isBday = isBirthdaySoon(c.birthday);
+    return `<div class="customer-card" onclick="showDetail('${c.id}')">
+      <div class="customer-avatar">${c.name[0]}</div>
+      <div class="customer-info">
+        <div class="customer-name">${c.name}${isBday ? ' 🎂' : ''}</div>
+        <div class="customer-meta">
+          <span>${visits.length}回来店</span>
+          ${last ? `<span>最終: ${formatDate(last)}</span>` : ''}
+          ${c.type ? `<span class="badge badge-rose">${c.type}</span>` : ''}
+        </div>
+      </div>
+      <div style="color:var(--text-muted);font-size:1.2em">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detail ──
+function showDetail(id) {
+  currentCustomerId = id;
+  const c = data.customers.find(x => x.id === id);
+  if (!c) return;
+  const visits = c.visits || [];
+  const isBday = isBirthdaySoon(c.birthday);
+
+  let html = `
+    <div class="detail-header">
+      <div class="detail-avatar">${c.name[0]}</div>
+      <div>
+        <div class="detail-name">${c.name}${isBday ? ' 🎂' : ''}</div>
+        <div class="detail-sub">${visits.length}回来店${c.birthday ? ' · ' + formatDate(c.birthday) + '生まれ' : ''}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">基本情報</div>
+      <div class="info-grid">
+        ${c.birthday ? `<div class="info-item"><div class="info-label">誕生日</div><div class="info-value">${formatDate(c.birthday)}</div></div>` : ''}
+      </div>
+      ${c.memo ? `<div style="font-size:0.88em;line-height:1.7;white-space:pre-wrap;margin-top:8px">${c.memo}</div>` : ''}
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-ghost" style="font-size:0.82em;padding:8px 14px" onclick="editCustomer('${c.id}')">✏️ 基本情報を編集</button>
+        <button class="btn-sm danger" style="font-size:0.82em;padding:8px 14px" onclick="confirmDeleteCustomer('${c.id}')">🗑️ 削除</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex-between mb-16">
+        <div class="section-title" style="margin-bottom:0">来店履歴</div>
+        <button class="btn-primary" style="font-size:0.78em;padding:8px 16px" onclick="openVisitModal()">＋ 記録</button>
+      </div>
+  `;
+  if (visits.length === 0) {
+    html += '<div class="empty-state" style="padding:20px 0"><div class="icon">📝</div>まだ記録がありません</div>';
+  } else {
+    const sorted = [...visits].sort((a,b) => b.date.localeCompare(a.date));
+    html += sorted.map((v,i) => `
+      <div class="visit-item">
+        <div class="visit-date">${formatDate(v.date)}</div>
+        <div class="visit-count">${visits.length - i}回目${v.course ? ` · <span style="color:var(--gold)">${v.course}</span>` : ''}${v.visitType ? ` · <span style="color:${v.visitType==='指名'?'#d4607a':'var(--text-soft)'};font-weight:500">${v.visitType}</span>` : ''}</div>
+        ${v.memo ? `<div class="visit-note" style="white-space:pre-wrap">${v.memo}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="btn-sm" style="background:var(--blush);color:var(--rose)" onclick="editVisit('${c.id}','${v.id}')">✏️ 編集</button>
+          <button class="btn-sm danger" onclick="deleteVisit('${c.id}','${v.id}')">削除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  html += `</div>`;
+  document.getElementById('detailContent').innerHTML = html;
+  showView('detail');
+  document.getElementById('view-detail').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+
+let editingVisitId = null;
+let selectedVisitType = '';
+let selectedVisitKind = '';
+function selectVisitType(t) {
+  if (selectedVisitType === t) {
+    selectedVisitType = '';
+    document.getElementById('typeFree').classList.remove('selected');
+    document.getElementById('typeShimei').classList.remove('selected');
+  } else {
+    selectedVisitType = t;
+    document.getElementById('typeFree').classList.toggle('selected', t==='フリー');
+    document.getElementById('typeShimei').classList.toggle('selected', t==='指名');
+  }
+}
+function selectVisitKind(k) {
+  if (selectedVisitKind === k) {
+    selectedVisitKind = '';
+    document.getElementById('typeNew').classList.remove('selected');
+    document.getElementById('typeRepeat').classList.remove('selected');
+  } else {
+    selectedVisitKind = k;
+    document.getElementById('typeNew').classList.toggle('selected', k==='新規');
+    document.getElementById('typeRepeat').classList.toggle('selected', k==='リピ');
+  }
+}
+function editVisit(cid, vid) {
+  const c = data.customers.find(x => x.id === cid);
+  if (!c) return;
+  const v = (c.visits||[]).find(x => x.id === vid);
+  if (!v) return;
+  editingVisitId = vid;
+  selectedVisitType = v.visitType || '';
+  selectedVisitKind = v.visitKind || '';
+  document.getElementById('visitModalTitle').textContent = '✏️ 来店記録を編集';
+  document.getElementById('visitSaveBtn').textContent = '保存する';
+  document.getElementById('visitDate').value = v.date;
+  document.getElementById('typeFree').classList.toggle('selected', v.visitType==='フリー');
+  document.getElementById('typeShimei').classList.toggle('selected', v.visitType==='指名');
+  document.getElementById('typeNew').classList.toggle('selected', v.visitKind==='新規');
+  document.getElementById('typeRepeat').classList.toggle('selected', v.visitKind==='リピ');
+  document.getElementById('visitCourse').value = v.course || '';
+  document.getElementById('visitMemo').value = v.memo || '';
+  document.getElementById('visitModal').hidden = false;
+}
+let confirmCallback = null;
+function showConfirm(msg, cb) {
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmDialog').hidden = false;
+}
+function closeConfirm() {
+  document.getElementById('confirmDialog').hidden = true;
+  confirmCallback = null;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('confirmOkBtn').onclick = () => {
+    if (confirmCallback) confirmCallback();
+    closeConfirm();
+  };
+  // 登録ボタンの初期設定
+  document.getElementById('addModalSaveBtn').onclick = saveCustomer;
+  // 給料日付の初期値を今日に
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('salaryDate').value = today;
+});
+function deleteVisit(cid, vid) {
+  showConfirm('この来店記録を削除しますか？', () => {
+    const c = data.customers.find(x => x.id === cid);
+    if (!c) return;
+    c.visits = (c.visits||[]).filter(v => v.id !== vid);
+    save();
+    showDetail(cid);
+  });
+}
+function confirmDeleteCustomer(id) {
+  showConfirm('このお客様を削除しますか？', () => deleteCustomer(id));
+}
+function deleteCustomer(id) {
+  data.customers = data.customers.filter(c => c.id !== id);
+  save();
+  renderList();
+  showView('list');
+}
+
+// ── Add Customer Modal ──
+function openAddModal() {
+  selectedType = '';
+  ['newName','newBirthday','newMemo'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.querySelector('#addModal .modal-title').textContent = '🌸 お客様を登録';
+  const saveBtn = document.getElementById('addModalSaveBtn');
+  saveBtn.textContent = '登録する';
+  saveBtn.onclick = saveCustomer;
+  document.getElementById('addModal').hidden = false;
+}
+function closeAddModal() { document.getElementById('addModal').hidden = true; }
+function selectType(t) {
+  selectedType = t;
+}
+function saveCustomer() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { alert('お名前を入力してください'); return; }
+  data.customers.push({
+    id: 'c' + Date.now(),
+    name,
+    birthday: document.getElementById('newBirthday').value,
+    type: selectedType,
+    memo: document.getElementById('newMemo').value.trim(),
+    visits: []
+  });
+  save();
+  closeAddModal();
+  alert('登録OK! 件数: ' + data.customers.length);
+  renderList();
+}
+
+// ── Edit Customer ──
+function editCustomer(id) {
+  const c = data.customers.find(x => x.id === id);
+  if (!c) return;
+  selectedType = c.type || '';
+  document.getElementById('newName').value = c.name;
+  document.getElementById('newBirthday').value = c.birthday || '';
+  document.getElementById('newMemo').value = c.memo || '';
+  // swap save to update
+  document.querySelector('#addModal .modal-title').textContent = '✏️ お客様を編集';
+  const saveBtn = document.getElementById('addModalSaveBtn');
+  saveBtn.textContent = '更新する';
+  saveBtn.onclick = () => updateCustomer(id);
+  document.getElementById('addModal').hidden = false;
+}
+function updateCustomer(id) {
+  const c = data.customers.find(x => x.id === id);
+  if (!c) return;
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { alert('お名前を入力してください'); return; }
+  c.name = name;
+  c.birthday = document.getElementById('newBirthday').value;
+  c.type = selectedType;
+  c.memo = document.getElementById('newMemo').value.trim();
+  save();
+  // reset modal
+  document.querySelector('#addModal .modal-title').textContent = '🌸 お客様を登録';
+  const saveBtn = document.getElementById('addModalSaveBtn');
+  saveBtn.textContent = '登録する';
+  saveBtn.onclick = saveCustomer;
+  closeAddModal();
+  showDetail(id);
+}
+
+// ── Visit Modal ──
+function openVisitModal() {
+  editingVisitId = null;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('visitModalTitle').textContent = '📝 来店記録を追加';
+  document.getElementById('visitSaveBtn').textContent = '記録する';
+  document.getElementById('visitDate').value = today;
+  selectedVisitType = '';
+  selectedVisitKind = '';
+  document.getElementById('typeFree').classList.remove('selected');
+  document.getElementById('typeShimei').classList.remove('selected');
+  document.getElementById('typeNew').classList.remove('selected');
+  document.getElementById('typeRepeat').classList.remove('selected');
+  document.getElementById('visitCourse').value = '';
+  document.getElementById('visitMemo').value = '';
+  document.getElementById('visitModal').hidden = false;
+}
+function closeVisitModal() { document.getElementById('visitModal').hidden = true; }
+function saveVisit() {
+  if (!currentCustomerId) return;
+  const date = document.getElementById('visitDate').value;
+  if (!date) { alert('来店日を入力してください'); return; }
+  const c = data.customers.find(x => x.id === currentCustomerId);
+  if (!c) return;
+  if (!c.visits) c.visits = [];
+  const course = document.getElementById('visitCourse').value.trim();
+  const memo = document.getElementById('visitMemo').value.trim();
+  if (editingVisitId) {
+    const v = c.visits.find(x => x.id === editingVisitId);
+    if (v) { v.date = date; v.visitType = selectedVisitType; v.visitKind = selectedVisitKind; v.course = course; v.memo = memo; }
+  } else {
+    c.visits.push({ id: 'v' + Date.now(), date, visitType: selectedVisitType, visitKind: selectedVisitKind, course, memo });
+  }
+  save();
+  closeVisitModal();
+  showDetail(currentCustomerId);
+}
+
+// ── Calendar ──
+function renderCalendar() {
+  const title = `${calYear}年 ${calMonth+1}月`;
+  document.getElementById('calTitle').textContent = title;
+  const grid = document.getElementById('calGrid');
+  const days = ['日','月','火','水','木','金','土'];
+  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const last = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  // event dates
+  const visitDates = new Set();
+  data.customers.forEach(c => (c.visits||[]).forEach(v => {
+    const d = new Date(v.date);
+    if (d.getFullYear()===calYear && d.getMonth()===calMonth) visitDates.add(d.getDate());
+  }));
+  const shiftDates = new Set();
+  data.shifts.forEach(s => {
+    const d = new Date(s.date);
+    if (d.getFullYear()===calYear && d.getMonth()===calMonth) shiftDates.add(d.getDate());
+  });
+  // 給料日
+  const salaryByDate = {};
+  (data.salary||[]).forEach(s => {
+    const d = new Date(s.date);
+    if (d.getFullYear()===calYear && d.getMonth()===calMonth) {
+      const day = d.getDate();
+      salaryByDate[day] = (salaryByDate[day]||0) + s.amount;
+    }
+  });
+  // birthday dates (recurring every year)
+  const birthdayDates = {}; // date -> [name]
+  data.customers.forEach(c => {
+    if (!c.birthday) return;
+    const bday = new Date(c.birthday);
+    if (bday.getMonth() === calMonth) {
+      const bd = bday.getDate();
+      if (!birthdayDates[bd]) birthdayDates[bd] = [];
+      birthdayDates[bd].push(c.name);
+    }
+  });
+  // prev month
+  const prevLast = new Date(calYear, calMonth, 0).getDate();
+  for (let i = first-1; i >= 0; i--) {
+    html += `<div class="cal-cell other-month">${prevLast-i}</div>`;
+  }
+  for (let d = 1; d <= last; d++) {
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+    const hasEv = visitDates.has(d) || shiftDates.has(d);
+    const hasBday = !!birthdayDates[d];
+    const hasSalary = !!salaryByDate[d];
+    html += `<div class="cal-cell${isToday?' today':''}${hasEv?' has-event':''}${hasBday?' has-birthday':''}" onclick="showCalDay(${d})">${d}${hasBday ? `<div style="font-size:0.82em;line-height:1.3">🎂</div>` : ''}${hasSalary ? `<div style="font-size:0.58em;line-height:1.3;color:#80639c;font-weight:700">¥${salaryByDate[d].toLocaleString()}</div>` : ''}</div>`;
+  }
+  grid.innerHTML = html;
+  renderCalEvents(null);
+}
+function showCalDay(d) {
+  renderCalEvents(d);
+}
+function renderCalEvents(day) {
+  const el = document.getElementById('eventList');
+  const items = [];
+  if (day) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    data.customers.forEach(c => {
+      (c.visits||[]).forEach(v => {
+        if (v.date === dateStr) items.push(`<span style="color:var(--rose)">${c.name}</span>さん来店`);
+      });
+      // birthday check (every year)
+      if (c.birthday) {
+        const bday = new Date(c.birthday);
+        if (bday.getMonth() === calMonth && bday.getDate() === day) {
+          items.push(`<span style="color:#d4607a;cursor:pointer;text-decoration:underline" onclick="showDetail('${c.id}')">🎂 ${c.name}さん</span>`);
+        }
+      }
+    });
+    data.shifts.filter(s=>s.date===dateStr).forEach(s => {
+      items.push(`出勤${s.note ? ': '+s.note : ''}`);
+    });
+    (data.salary||[]).filter(s=>s.date===dateStr).forEach(s => {
+      items.push(`<span style="color:#80639c;font-weight:600">💰 給料: ¥${s.amount.toLocaleString()}</span>`);
+    });
+  } else {
+    // show all this month
+    data.shifts.forEach(s => {
+      const d = new Date(s.date);
+      if (d.getFullYear()===calYear && d.getMonth()===calMonth)
+        items.push(`${formatDate(s.date)} 出勤${s.note?': '+s.note:''}`);
+    });
+  }
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = items.map(i => `<div class="event-item"><div class="event-dot"></div><div>${i}</div></div>`).join('');
+}
+function calPrev() { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if (calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function addShift() {
+  const date = document.getElementById('shiftDate').value;
+  if (!date) { alert('日付を選んでください'); return; }
+  data.shifts.push({ id:'s'+Date.now(), date, note: document.getElementById('shiftNote').value.trim() });
+  save();
+  renderCalendar();
+  document.getElementById('shiftDate').value='';
+  document.getElementById('shiftNote').value='';
+}
+
+// ── Salary ──
+function addSalary() {
+  const dateVal = document.getElementById('salaryDate').value;
+  const amtVal = document.getElementById('salaryAmount').value.trim();
+  if (!dateVal || !amtVal) { alert('日付と金額を入力してください'); return; }
+  const amount = parseInt(amtVal, 10);
+  if (isNaN(amount) || amount <= 0) { alert('正しい金額を入力してください'); return; }
+  if (!data.salary) data.salary = [];
+  data.salary.push({ id: 's' + Date.now(), date: dateVal, amount });
+  save();
+  document.getElementById('salaryDate').value = '';
+  document.getElementById('salaryAmount').value = '';
+  renderStats();
+}
+function renderSalaryList() {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const thisMonth = now.getMonth();
+  const list = (data.salary || []).filter(s => {
+    const d = new Date(s.date);
+    return d.getFullYear() === thisYear && d.getMonth() === thisMonth;
+  }).sort((a, b) => a.date.localeCompare(b.date));
+  const el = document.getElementById('salaryList');
+  if (!list.length) {
+    el.innerHTML = '<div style="font-size:0.82em;color:var(--text-muted);text-align:center;padding:6px 0">今月の入力はありません</div>';
+    return;
+  }
+  el.innerHTML = list.map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--blush-mid);font-size:0.84em">
+      <span style="color:var(--text-soft)">${formatDate(s.date)}</span>
+      <span style="font-weight:600;color:var(--rose)">¥${s.amount.toLocaleString()}</span>
+      <button class="btn-sm danger" style="font-size:0.76em;padding:4px 10px" onclick="deleteSalary('${s.id}')">削除</button>
+    </div>`).join('');
+}
+function deleteSalary(id) {
+  data.salary = (data.salary || []).filter(s => s.id !== id);
+  save();
+  renderStats();
+}
+
+// ── Stats ──
+function renderStats() {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const thisMonth = now.getMonth();
+  // 今月の来店人数（ユニーク）
+  const monthVisitors = new Set();
+  data.customers.forEach(c => {
+    (c.visits||[]).forEach(v => {
+      const d = new Date(v.date);
+      if (d.getFullYear()===thisYear && d.getMonth()===thisMonth) monthVisitors.add(c.id);
+    });
+  });
+  const total = data.customers.length;
+  const allVisits = data.customers.reduce((n,c)=>n+(c.visits||[]).length,0);
+  const repeaters = data.customers.filter(c=>(c.visits||[]).length>1).length;
+  const repeatRate = total ? Math.round(repeaters/total*100) : 0;
+  const avg = total ? (allVisits/total).toFixed(1) : 0;
+  // 今月の指名率
+  let monthTotal = 0, monthShimei = 0;
+  data.customers.forEach(c => {
+    (c.visits||[]).forEach(v => {
+      const d = new Date(v.date);
+      if (d.getFullYear()===thisYear && d.getMonth()===thisMonth) {
+        monthTotal++;
+        if (v.visitType==='指名') monthShimei++;
+      }
+    });
+  });
+  const shimeiRate = monthTotal ? Math.round(monthShimei/monthTotal*100) : 0;
+  document.getElementById('statTotal').textContent = monthVisitors.size;
+  document.getElementById('statVisits').textContent = monthShimei;
+  document.getElementById('statRepeat').textContent = repeatRate+'%';
+  document.getElementById('statShimei').textContent = shimeiRate+'%';
+
+  // 今月の給料合計
+  const monthSalary = (data.salary || []).reduce((sum, s) => {
+    const d = new Date(s.date);
+    return (d.getFullYear()===thisYear && d.getMonth()===thisMonth) ? sum + s.amount : sum;
+  }, 0);
+  document.getElementById('statSalary').textContent = '¥' + monthSalary.toLocaleString();
+  renderSalaryList();
+
+  // Birthday alerts
+  const bdays = data.customers.filter(c => isBirthdaySoon(c.birthday));
+  const bAlert = document.getElementById('birthdayAlerts');
+  if (bdays.length) {
+    bAlert.innerHTML = `<div class="birthday-alert">
+      <div class="birthday-alert-title">🎂 まもなく誕生日のお客様</div>
+      ${bdays.map(c=>`<div class="birthday-person">
+        <span class="badge badge-birthday">🎂</span>
+        <span>${c.name}</span>
+        <span style="color:#d4607a;font-size:0.8em">${formatDate(c.birthday)}</span>
+      </div>`).join('')}
+    </div>`;
+  } else { bAlert.innerHTML = ''; }
+
+  // Monthly
+  const y = now.getFullYear(), m = now.getMonth();
+  const monthly = [];
+  data.customers.forEach(c => {
+    (c.visits||[]).forEach(v => {
+      const d = new Date(v.date);
+      if (d.getFullYear()===y && d.getMonth()===m) monthly.push({name:c.name, date:v.date});
+    });
+  });
+  monthly.sort((a,b)=>a.date.localeCompare(b.date));
+  const mEl = document.getElementById('monthlyList');
+  if (!monthly.length) {
+    mEl.innerHTML = '<div style="font-size:0.84em;color:var(--text-muted);text-align:center;padding:10px">今月の来店記録はありません</div>';
+  } else {
+    mEl.innerHTML = monthly.map(v=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--blush-mid);font-size:0.84em">
+        <span>${v.name}</span>
+        <span style="color:var(--text-muted)">${formatDate(v.date)}</span>
+      </div>`).join('');
+  }
+}
+
+// ── Helpers ──
+function isBirthdaySoon(birthday) {
+  if (!birthday) return false;
+  const today = new Date();
+  const bday = new Date(birthday);
+  const next = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+  if (next < today) next.setFullYear(today.getFullYear()+1);
+  return (next - today) / (1000*60*60*24) <= 30;
+}
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+</script>
