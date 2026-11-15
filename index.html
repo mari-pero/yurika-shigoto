@@ -627,6 +627,12 @@ button, input, textarea, select { font-family: inherit !important; }
   <!-- ── STATS VIEW ── -->
   <div class="view" id="view-stats">
     <div id="birthdayAlerts"></div>
+    <div class="stat-row" style="grid-template-columns:1fr">
+      <div class="stat-box">
+        <div class="stat-num" id="statCustomers">0</div>
+        <div class="stat-label">登録人数</div>
+      </div>
+    </div>
     <div class="stat-row">
       <div class="stat-box">
         <div class="stat-num" id="statTotal">0</div>
@@ -1246,6 +1252,7 @@ function renderStats() {
     });
   });
   const shimeiRate = monthTotal ? Math.round(monthShimei/monthTotal*100) : 0;
+  document.getElementById('statCustomers').textContent = total;
   document.getElementById('statTotal').textContent = monthVisitors.size;
   document.getElementById('statVisits').textContent = monthShimei;
   document.getElementById('statRepeat').textContent = repeatRate+'%';
