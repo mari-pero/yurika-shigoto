@@ -995,7 +995,7 @@ function saveCustomer() {
   });
   save();
   closeAddModal();
-  alert('登録OK! 件数: ' + data.customers.length);
+  showView('list');
   renderList();
 }
 
