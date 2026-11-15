@@ -796,6 +796,7 @@ function setSortMode(mode) {
 
 // ── Customer List ──
 function renderList() {
+  try {
   const q = (document.getElementById('searchInput').value || '').toLowerCase();
   let list = data.customers.filter(c =>
     c.name.toLowerCase().includes(q) ||
@@ -830,6 +831,9 @@ function renderList() {
       <div style="color:var(--text-muted);font-size:1.2em">›</div>
     </div>`;
   }).join('');
+  } catch(e) {
+    document.getElementById('customerList').innerHTML = '<div style="color:red;padding:20px">エラー: ' + e.message + '</div>';
+  }
 }
 
 // ── Detail ──
