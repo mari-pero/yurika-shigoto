@@ -662,13 +662,15 @@ button, input, textarea, select { font-family: inherit !important; }
     <div class="card">
       <div class="section-title">💰 給料を入力</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
-        <div>
-          <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">日付</label>
-          <input type="date" class="form-input" id="salaryDate" style="font-size:0.9em;padding:9px 12px;width:100%">
-        </div>
-        <div>
-          <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">金額（円）</label>
-          <input type="number" class="form-input" id="salaryAmount" placeholder="例：12000" style="font-size:0.9em;padding:9px 12px;width:100%" inputmode="numeric">
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div style="flex:0 0 44%">
+            <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">日付</label>
+            <input type="date" class="form-input" id="salaryDate" style="font-size:0.82em;padding:9px 8px;width:100%">
+          </div>
+          <div style="flex:1">
+            <label class="form-label" style="font-size:0.78em;margin-bottom:4px;display:block">金額（円）</label>
+            <input type="number" class="form-input" id="salaryAmount" placeholder="例：12000" style="font-size:0.82em;padding:9px 8px;width:100%" inputmode="numeric">
+          </div>
         </div>
         <button class="btn-primary" style="font-size:0.9em;padding:11px;width:100%" onclick="addSalary()">追加する</button>
       </div>
